@@ -1,8 +1,7 @@
-from copy import copy
 import pandas as pd
 
 from inputs import ModelInputs
-from transition_matrices import TransitionMatrices
+from transition_matrices import TransitionMatrices, generate_bariatric_transition_matrices, generate_oca_transition_matrices
 from prevalence import StatePrevalence
 
 
@@ -11,64 +10,52 @@ class DiseaseProgression(TransitionMatrices):
     These results are stored in the progression_df dataframe.
     """
     year_interval = range(5)
-
     disease_prevalence = StatePrevalence().calculate_disease_prevalence_per_age_cohort()
 
-    def __init__(self):
+    def __init__(self, initial_cohort):
         super().__init__()
-        self.progression_df = None
-        self.current_year = 0
+        # Get initial prevalence array for initial cohort.
+        self.progression_df = self.disease_prevalence.loc[[initial_cohort]]
 
-    def initialize_progression_df(self, initial_cohort):
+        # Get age cohorts specific to the initial cohort selected.
+        self.age_cohorts = ModelInputs.cohorts[ModelInputs.cohorts.index(initial_cohort):]
 
-        # Get initial prevalence array for initial cohort
-        initial_prevalence = self.disease_prevalence.loc[[initial_cohort]]
-
-        # A copy of this must be made before the 'Year' column is added for matrix multiplication
-        prevalence_array = copy(initial_prevalence)
-        initial_prevalence['Year'] = self.current_year
-
-        if self.progression_df is None:
-            # If progression dataframe has not yet been created, assign it to initial prevalence
-            self.progression_df = initial_prevalence
-
-        else:
-            # If dataframe has been created, concatenate initial prevalence to main dataframe
-            self.progression_df = pd.concat([self.progression_df, initial_prevalence])
-
-        # Get age cohorts specific to the initial cohort selected
-        age_cohorts = ModelInputs.cohorts[ModelInputs.cohorts.index(initial_cohort):]
-
-        return prevalence_array, age_cohorts
+    #     # Get initial prevalence array for initial cohort
+    #     initial_prevalence = self.disease_prevalence.loc[[initial_cohort]]
+    #
+    #     # A copy of this must be made before the 'Year' column is added for matrix multiplication
+    #     prevalence_array = initial_prevalence.values
+    #
+    #     # If progression df has not yet been created, assign it to initial prevalence
+    #     self.progression_df = initial_prevalence
+    #
+    #     # Get age cohorts specific to the initial cohort selected
+    #     age_cohorts = ModelInputs.cohorts[ModelInputs.cohorts.index(initial_cohort):]
+    #
+    #     return prevalence_array, age_cohorts
 
     def calculate_disease_progression(self):
 
-        for initial_cohort in ModelInputs.cohorts:
+        year_num = 0
+        prevalence_array = self.progression_df.values
 
-            self.current_year = 0
-            prevalence_array, age_cohorts = self.initialize_progression_df(initial_cohort)
+        for cohort in self.age_cohorts:
 
-            for age_cohort in age_cohorts:
+            # Cycle through the year interval for every age cohort.
+            for year in self.year_interval:
+                # increment current year by 1
+                year_num += 1
 
-                # Cycle through the year interval for every age cohort.
-                for year in self.year_interval:
-                    # increment current year by 1
-                    self.current_year += 1
+                # Multiply transition matrix by prevalence array
+                transition_matrix = self.generate_transition_matrix(cohort)
+                prevalence_array = prevalence_array.dot(transition_matrix)
 
-                    # Multiply transition matrix by prevalence array
-                    prevalence_array = prevalence_array.dot(self.generate_transition_matrix(age_cohort))
+                self.progression_df = pd.concat([self.progression_df, prevalence_array])
 
-                    # A copy of this array must be made so adding the 'Year' column to this row
-                    # doesn't affect the multiplied array
-
-                    new_progression_row = copy(prevalence_array)
-                    new_progression_row['Year'] = self.current_year
-
-                    self.progression_df = pd.concat([self.progression_df, new_progression_row])
-
-        # Add "year" to index to make a multi-index
-        return self.progression_df.set_index('Year', append=True)
+        return self.progression_df
 
 
 if __name__ == '__main__':
-    DiseaseProgression().calculate_disease_progression()
+    generate_oca_transition_matrices()
+    # for cohort in ModelInputs.cohorts:
+    #     DiseaseProgression(cohort).calculate_disease_progression()

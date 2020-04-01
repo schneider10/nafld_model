@@ -5,8 +5,6 @@ from inputs import ModelInputs
 
 
 # Prevalence Calculations
-
-
 class StatePrevalence(ModelInputs):
 
     def __init__(self):

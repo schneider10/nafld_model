@@ -26,6 +26,8 @@ class ModelInputs:
 
     bariatric_substitutions = LoadIn.inputs['Treatment Effects'].set_index('Treatment Year')
 
-    cohorts = NAFLD_inputs.index
+    oca_substitutions = LoadIn.inputs['OCA Effects'].set_index('Treatment Year')
 
-    disease_states = scoring_and_costing.index
+    cohorts = NAFLD_inputs.index.tolist()
+
+    disease_states = transition_probabilities.index

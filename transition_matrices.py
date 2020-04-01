@@ -1,5 +1,6 @@
 import itertools
 import numpy as np
+import pandas as pd
 from mortality import Mortality
 from inputs import ModelInputs
 
@@ -15,7 +16,7 @@ class Progression:
 
     @staticmethod
     def calculate(value):
-        return value * ModelInputs.age_specific_rr['Disease Progression RR ']
+        return value * ModelInputs.age_specific_rr['Disease Progression RR']
 
 
 class HccToLt:
@@ -60,7 +61,7 @@ class TransitionMatrices(Mortality):
              'F3 mortality probability': self.mortality_prob['F3 mortality probability'].loc[age_cohort],
              'F4 mortality probability': self.mortality_prob['F4 mortality probability'].loc[age_cohort],
              'residual_prob': None}
-        ).assign(Cohorts=age_cohort).set_index('Cohorts', append=True).swaplevel(i=0, j=1)
+        )
 
     def insert_residual_probabilities(self):
         """
@@ -70,8 +71,8 @@ class TransitionMatrices(Mortality):
 
         residual_probabilities = self.df.apply(lambda x: 1 - np.sum(x), axis=1)
 
-        for age_cohort, state in residual_probabilities.index:
-            self.df.loc[age_cohort, state].fillna(residual_probabilities[age_cohort, state], inplace=True)
+        for state in residual_probabilities.index:
+            self.df.loc[state].fillna(residual_probabilities[state], inplace=True)
 
     def generate_transition_matrix(self, age_cohort):
         """
@@ -110,7 +111,9 @@ class BariatricTransitionMatrices(TransitionMatrices):
         super().__init__()
         # transition prob located in 'progression calc'
         self.f2_to_f1 = ModelInputs.bariatric_substitutions['F2, F1 transition probability']
-        self.f3_to_f2 = ModelInputs.bariatric_substitutions['F3, F2 transition probability ']
+        self.f3_to_f2 = ModelInputs.bariatric_substitutions['F3, F2 transition probability']
+        self.f1_to_f2 = ModelInputs.bariatric_substitutions['F1, F2 transition probability']
+        self.f2_to_f3 = ModelInputs.bariatric_substitutions['F2, F3 transition probability']
 
         if year is not None:
             self.generate_bariatric_df(year)
@@ -122,17 +125,71 @@ class BariatricTransitionMatrices(TransitionMatrices):
         :param year:
         :return:
         """
-        self.set_probability(initial_state='F2', final_state='F1', probability=self.f2_to_f1[year])
-        self.set_probability(initial_state='F3', final_state='F2', probability=self.f3_to_f2[year])
+        transitions = (('F2', 'F1', self.f2_to_f1),
+                       ('F3', 'F2', self.f3_to_f2),
+                       ('F1', 'F2', self.f1_to_f2),
+                       ('F2', 'F3', self.f2_to_f3)
+                       )
+        for initial_state, final_state, probability in transitions:
+            self.set_probability(initial_state, final_state, probability[year])
+
+
+class OCATransitionMatrices(TransitionMatrices):
+    def __init__(self, year=None):
+        """
+        OCA Transition Matrices are the same as the normal transition matrices with the exception that they
+        also contain extra matrices for Years 1-5 for every cohort (5 x cohort amount extra matrices).
+        """
+        super().__init__()
+        # transition prob located in 'progression calc'
+        self.f2_to_f1 = ModelInputs.oca_substitutions['F2, F1 transition probability']
+        self.f3_to_f2 = ModelInputs.oca_substitutions['F3, F2 transition probability']
+        self.f1_to_f2 = ModelInputs.oca_substitutions['F1, F2 transition probability']
+        self.f2_to_f3 = ModelInputs.oca_substitutions['F2, F3 transition probability']
+        self.f3_to_f1 = ModelInputs.oca_substitutions['F3, F1 transition probability']
+        self.f2_to_nafld_y2_beyond = ModelInputs.oca_substitutions['F2, NAFLD Y2-beyond transition probability']
+
+        if year is not None:
+            self.generate_oca_df(year)
+
+    def generate_oca_df(self, year):
+        """
+        need to generate new substitution dfs based on f2 to f1 and f3 to f2 oca probability substitutions.
+        new df for every year.
+        :param year:
+        :return:
+        """
+        transitions = (('F2', 'F1', self.f2_to_f1),
+                       ('F3', 'F2', self.f3_to_f2),
+                       ('F1', 'F2', self.f1_to_f2),
+                       ('F2', 'F3', self.f2_to_f3),
+                       ('F3', 'F1', self.f3_to_f1),
+                       ('F2', 'NAFLD Y2-beyond', self.f2_to_nafld_y2_beyond)
+                       )
+        for initial_state, final_state, probability in transitions:
+            self.set_probability(initial_state, final_state, probability[year])
+
+
+def generate_alternative_transition_matrices(year_index, transition_matrix, matrix_name):
+    transition_matrices = {}
+
+    for yr in year_index:
+        for cohort in ModelInputs.cohorts:
+            transition_matrices.update(
+                {f'{yr}:{cohort}': transition_matrix(year=yr).generate_transition_matrix(cohort)}
+            )
+            df = transition_matrix(year=yr).generate_transition_matrix(cohort)
+            output_file = f'{yr}-{matrix_name}_t_matrices.csv'
+
+            pd.DataFrame({'Cohort': cohort}, index=['Cohort']).to_csv(output_file, mode='a')
+            df.to_csv(output_file, mode='a')
 
 
 def generate_bariatric_transition_matrices():
-    bariatric_transition_matrices = {}
+    year_index = ModelInputs.bariatric_substitutions.index
+    generate_alternative_transition_matrices(year_index, BariatricTransitionMatrices, 'bariatric')
 
-    for yr in ModelInputs.bariatric_substitutions.index:
-        for cohort in ModelInputs.cohorts:
-            bariatric_transition_matrices.update(
-                {f'{yr}:{cohort}': BariatricTransitionMatrices(year=yr).generate_transition_matrix(cohort)}
-            )
-            df = BariatricTransitionMatrices(year=yr).generate_transition_matrix(cohort)
-            df.to_csv(f'{yr}-bariatric_t_matrices.csv', mode='a')
+
+def generate_oca_transition_matrices():
+    year_index = ModelInputs.oca_substitutions.index
+    generate_alternative_transition_matrices(year_index, OCATransitionMatrices, 'oca')
