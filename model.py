@@ -1,11 +1,11 @@
 import pandas as pd
 
 from inputs import ModelInputs
-from transition_matrices import TransitionMatrices, generate_bariatric_transition_matrices, generate_oca_transition_matrices
+from transition_matrices import TransitionMatrices, BariatricTransitionMatrices, OCATransitionMatrices
 from prevalence import StatePrevalence
 
 
-class DiseaseProgression(TransitionMatrices):
+class DiseaseProgression:
     """ We must multiply each transition matrix by its corresponding disease prevalence array.
     These results are stored in the progression_df dataframe.
     """
@@ -14,48 +14,62 @@ class DiseaseProgression(TransitionMatrices):
 
     def __init__(self, initial_cohort):
         super().__init__()
-        # Get initial prevalence array for initial cohort.
-        self.progression_df = self.disease_prevalence.loc[[initial_cohort]]
 
         # Get age cohorts specific to the initial cohort selected.
         self.age_cohorts = ModelInputs.cohorts[ModelInputs.cohorts.index(initial_cohort):]
 
-    #     # Get initial prevalence array for initial cohort
-    #     initial_prevalence = self.disease_prevalence.loc[[initial_cohort]]
-    #
-    #     # A copy of this must be made before the 'Year' column is added for matrix multiplication
-    #     prevalence_array = initial_prevalence.values
-    #
-    #     # If progression df has not yet been created, assign it to initial prevalence
-    #     self.progression_df = initial_prevalence
-    #
-    #     # Get age cohorts specific to the initial cohort selected
-    #     age_cohorts = ModelInputs.cohorts[ModelInputs.cohorts.index(initial_cohort):]
-    #
-    #     return prevalence_array, age_cohorts
+        # Get initial prevalence array for initial cohort.
+        self.progression_df = self.disease_prevalence.loc[[initial_cohort]].reset_index(drop=True)
+        self.prevalence_array = self.progression_df.to_numpy()[0]
 
     def calculate_disease_progression(self):
-
-        year_num = 0
-        prevalence_array = self.progression_df.values
-
         for cohort in self.age_cohorts:
+            # Get transition matrix for current cohort if transition matrices are traditional.
+            transition_matrix = TransitionMatrices().generate_df(cohort)
 
-            # Cycle through the year interval for every age cohort.
+            # Cycle through the year interval for every age cohort
             for year in self.year_interval:
-                # increment current year by 1
-                year_num += 1
+                # Multiply cohorts transition matrix by prevalence array for every year in year interval
+                self.prevalence_array = self.prevalence_array.dot(transition_matrix)
 
-                # Multiply transition matrix by prevalence array
-                transition_matrix = self.generate_transition_matrix(cohort)
-                prevalence_array = prevalence_array.dot(transition_matrix)
-
-                self.progression_df = pd.concat([self.progression_df, prevalence_array])
-
+                self.progression_df = self.progression_df.append(
+                    pd.Series(self.prevalence_array, index=self.progression_df.columns), ignore_index=True
+                )
         return self.progression_df
 
 
+class BariatricDiseaseProgression(DiseaseProgression):
+    def __init__(self, initial_cohort):
+        super().__init__(initial_cohort)
+
+    def calculate_disease_progression(self):
+        for cohort in self.age_cohorts:
+
+            # Cycle through the year interval for every age cohort
+            for year in self.year_interval:
+                transition_matrix = BariatricTransitionMatrices(year).generate_df(cohort)
+                # Multiply cohorts transition matrix by prevalence array for every year in year interval
+                prevalence_array = self.prevalence_array.dot(transition_matrix)
+
+                self.progression_df = pd.concat([self.progression_df, prevalence_array])
+
+
+class OCADiseaseProgression(DiseaseProgression):
+    def __init__(self, initial_cohort):
+        super().__init__(initial_cohort)
+
+    def calculate_disease_progression(self):
+        for cohort in self.age_cohorts:
+
+            # Cycle through the year interval for every age cohort
+            for year in self.year_interval:
+                transition_matrix = OCATransitionMatrices(year).generate_df(cohort)
+                # Multiply cohorts transition matrix by prevalence array for every year in year interval
+                prevalence_array = self.prevalence_array.dot(transition_matrix)
+
+                self.progression_df = pd.concat([self.progression_df, prevalence_array])
+
+
 if __name__ == '__main__':
-    generate_oca_transition_matrices()
-    # for cohort in ModelInputs.cohorts:
-    #     DiseaseProgression(cohort).calculate_disease_progression()
+    for age_cohort in ModelInputs.cohorts:
+        DiseaseProgression(age_cohort).calculate_disease_progression()

@@ -27,7 +27,7 @@ class HccToLt:
 
 
 class TransitionMatrices(Mortality):
-    def __init__(self):
+    def __init__(self, year=None):
         super().__init__()
         self.df = ModelInputs.transition_probabilities  # matrix with all the string substitutions
         self.disease_states = ModelInputs.disease_states
@@ -74,7 +74,7 @@ class TransitionMatrices(Mortality):
         for state in residual_probabilities.index:
             self.df.loc[state].fillna(residual_probabilities[state], inplace=True)
 
-    def generate_transition_matrix(self, age_cohort):
+    def generate_df(self, age_cohort):
         """
         Substitute strings in transition matrix with associated input values for each age cohort.
         transition_matrices = {}
@@ -109,20 +109,19 @@ class BariatricTransitionMatrices(TransitionMatrices):
         also contain extra matrices for Years 1-5 for every cohort (5 x cohort amount extra matrices).
         """
         super().__init__()
+        self.year = year
+
         # transition prob located in 'progression calc'
         self.f2_to_f1 = ModelInputs.bariatric_substitutions['F2, F1 transition probability']
         self.f3_to_f2 = ModelInputs.bariatric_substitutions['F3, F2 transition probability']
         self.f1_to_f2 = ModelInputs.bariatric_substitutions['F1, F2 transition probability']
         self.f2_to_f3 = ModelInputs.bariatric_substitutions['F2, F3 transition probability']
 
-        if year is not None:
-            self.generate_bariatric_df(year)
-
-    def generate_bariatric_df(self, year):
+    def generate_df(self, age_cohort):
         """
         need to generate new substitution dfs based on f2 to f1 and f3 to f2 bariatric probability substitutions.
         new df for every year.
-        :param year:
+        :param age_cohort:
         :return:
         """
         transitions = (('F2', 'F1', self.f2_to_f1),
@@ -131,7 +130,9 @@ class BariatricTransitionMatrices(TransitionMatrices):
                        ('F2', 'F3', self.f2_to_f3)
                        )
         for initial_state, final_state, probability in transitions:
-            self.set_probability(initial_state, final_state, probability[year])
+            self.set_probability(initial_state, final_state, probability[self.year])
+
+        super().generate_df(age_cohort)
 
 
 class OCATransitionMatrices(TransitionMatrices):
@@ -141,6 +142,8 @@ class OCATransitionMatrices(TransitionMatrices):
         also contain extra matrices for Years 1-5 for every cohort (5 x cohort amount extra matrices).
         """
         super().__init__()
+        self.year = year
+
         # transition prob located in 'progression calc'
         self.f2_to_f1 = ModelInputs.oca_substitutions['F2, F1 transition probability']
         self.f3_to_f2 = ModelInputs.oca_substitutions['F3, F2 transition probability']
@@ -149,14 +152,11 @@ class OCATransitionMatrices(TransitionMatrices):
         self.f3_to_f1 = ModelInputs.oca_substitutions['F3, F1 transition probability']
         self.f2_to_nafld_y2_beyond = ModelInputs.oca_substitutions['F2, NAFLD Y2-beyond transition probability']
 
-        if year is not None:
-            self.generate_oca_df(year)
-
-    def generate_oca_df(self, year):
+    def generate_df(self, age_cohort):
         """
         need to generate new substitution dfs based on f2 to f1 and f3 to f2 oca probability substitutions.
         new df for every year.
-        :param year:
+        :param age_cohort:
         :return:
         """
         transitions = (('F2', 'F1', self.f2_to_f1),
@@ -167,7 +167,9 @@ class OCATransitionMatrices(TransitionMatrices):
                        ('F2', 'NAFLD Y2-beyond', self.f2_to_nafld_y2_beyond)
                        )
         for initial_state, final_state, probability in transitions:
-            self.set_probability(initial_state, final_state, probability[year])
+            self.set_probability(initial_state, final_state, probability[self.year])
+
+        super().generate_df(age_cohort)
 
 
 def generate_alternative_transition_matrices(year_index, transition_matrix, matrix_name):
