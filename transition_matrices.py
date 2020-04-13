@@ -33,8 +33,8 @@ class TransitionMatrices(Mortality):
         self.disease_states = ModelInputs.disease_states
 
     def set_probability(self, initial_state, final_state, probability):
+        # Fills in matrix coordinate with defined probability
         self.df.loc[initial_state, final_state] = probability
-        # print(f'Setting {initial_state}: {final_state} to {probability}')
 
     def get_transition_type(self, initial_state, final_state):
         """
@@ -103,7 +103,7 @@ class TransitionMatrices(Mortality):
 
 
 class BariatricTransitionMatrices(TransitionMatrices):
-    def __init__(self, year=None):
+    def __init__(self, year):
         """
         Bariatric Transition Matrices are the same as the normal transition matrices with the exception that they
         also contain extra matrices for Years 1-5 for every cohort (5 x cohort amount extra matrices).
@@ -132,11 +132,11 @@ class BariatricTransitionMatrices(TransitionMatrices):
         for initial_state, final_state, probability in transitions:
             self.set_probability(initial_state, final_state, probability[self.year])
 
-        super().generate_df(age_cohort)
+        return super().generate_df(age_cohort)
 
 
 class OCATransitionMatrices(TransitionMatrices):
-    def __init__(self, year=None):
+    def __init__(self, year):
         """
         OCA Transition Matrices are the same as the normal transition matrices with the exception that they
         also contain extra matrices for Years 1-5 for every cohort (5 x cohort amount extra matrices).
@@ -169,7 +169,7 @@ class OCATransitionMatrices(TransitionMatrices):
         for initial_state, final_state, probability in transitions:
             self.set_probability(initial_state, final_state, probability[self.year])
 
-        super().generate_df(age_cohort)
+        return super().generate_df(age_cohort)
 
 
 def generate_alternative_transition_matrices(year_index, transition_matrix, matrix_name):
