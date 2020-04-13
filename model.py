@@ -1,119 +1,92 @@
 import pandas as pd
-
 from inputs import ModelInputs
-from transition_matrices import TransitionMatrices, BariatricTransitionMatrices, OCATransitionMatrices
-from prevalence import StatePrevalence
+from disease_progression import DiseaseProgression
 
 
-class DiseaseProgression:
-    """ We must multiply each transition matrix by its corresponding disease prevalence array.
-    These results are stored in the progression_df dataframe.
+class FinalCalculations:
+    """ We need to sum all values in the matrix above, at specified intervals.
+        Split big matrix into chunks based on interval. Sum all values in chunk to get life years at interval.
     """
-    disease_prevalence = StatePrevalence().calculate_disease_prevalence_per_age_cohort()
 
-    def __init__(self, initial_cohort):
+    def __init__(self, disease_progression):
         super().__init__()
+        self.disease_progression = disease_progression
+        self.final_calculations = pd.DataFrame({'Totals': ['Total Life Years',
+                                                           'Total QALY',
+                                                           'Total Cost',
+                                                           'Total Cost PPPY']}).set_index('Totals')
 
-        # Get age cohorts specific to the initial cohort selected.
-        self.age_cohorts = ModelInputs.cohorts[ModelInputs.cohorts.index(initial_cohort):]
+    def get_total_life_years(self, cohort):
+        """ Calculate total life years by summing all of the progression values
+        """
+        return self.disease_progression(cohort).calculate_progression().to_numpy().sum()
 
-        # Get initial prevalence array for initial cohort.
-        self.progression_df = self.disease_prevalence.loc[[initial_cohort]].reset_index(drop=True)
+    def get_total_QALY(self, cohort):
+        """ Calculate total QALY by summing each column of progression values,
+            weighing these values and summing them. """
+        return self.disease_progression.loc[cohort].sum(axis=0).multiply(
+            ModelInputs.scoring_and_costing['Quality Weight']).sum()
 
-        self.prevalence_array = self.progression_df.to_numpy()[0]
-        self.initial_cohort = initial_cohort
-        self.default_year_interval = range(5)
+    def get_total_cost(self, cohort):
+        """ Calculate total cost by summing each column of progression values, weighing these values with a cost,
+        summing them and then adding the total difference of death progression (delta death). """
 
-    def is_initial_cohort(self, cohort):
-        return cohort == self.initial_cohort
+        first_year_costs = ModelInputs.scoring_and_costing.loc['death']['First year costs']
 
-    def calculate_disease_progression(self):
-        for cohort in self.age_cohorts:
+        total_cost = self.disease_progression.loc[cohort].sum(axis=0).multiply(
+            ModelInputs.scoring_and_costing['PPPY cost']).sum()
+        delta_death = (self.disease_progression.loc[cohort].iloc[-1]['death'] -
+                       self.disease_progression.loc[cohort].iloc[0]['death']) * first_year_costs
+        return total_cost + delta_death
 
-            # Get transition matrix for current cohort if transition matrices are traditional.
-            transition_matrix = TransitionMatrices().generate_df(cohort)
+    def get_totals(self):
+        """ For every initial age cohort, calculate all aggregate values.
+        """
 
-            # Cycle through the year interval for every age cohort
-            for _ in self.default_year_interval:
-                # Multiply cohorts transition matrix by prevalence array for every year in year interval
-                self.prevalence_array = self.prevalence_array.dot(transition_matrix)
+        for cohort in ModelInputs.cohorts:
+            total_life_years = self.get_total_life_years(cohort)
+            total_QALY = self.get_total_QALY(cohort)
+            total_cost = self.get_total_cost(cohort)
+            total_cost_pppy = total_cost / total_life_years
 
-                self.progression_df = self.progression_df.append(
-                    pd.Series(self.prevalence_array, index=self.progression_df.columns), ignore_index=True
-                )
-        return self.progression_df
+            self.final_calculations[cohort] = [total_life_years, total_QALY,
+                                               total_cost, total_cost_pppy]
 
+        # Calculate the sum of these totals for all cohorts
+        self.final_calculations['All Cohorts'] = self.final_calculations.sum(axis=1)
 
-class AlternativeDiseaseProgression(DiseaseProgression):
-    def __init__(self, initial_cohort, transition_matrices):
-        super().__init__(initial_cohort)
-        self.alternative_transition_matrices = transition_matrices
-
-    def calculate_disease_progression(self):
-        for cohort in self.age_cohorts:
-            if self.is_initial_cohort(cohort):
-
-                # Cycle through the year interval for every age cohort. Range is 5 for 5 new bariatric tx matrices.
-                for year in self.default_year_interval:
-                    transition_matrix = self.alternative_transition_matrices(year).generate_df(cohort)
-
-                    # Multiply cohorts transition matrix by prevalence array for every year in year interval
-                    self.prevalence_array = self.prevalence_array.dot(transition_matrix)
-
-                    self.progression_df = self.progression_df.append(
-                        pd.Series(self.prevalence_array, index=self.progression_df.columns), ignore_index=True
-                    )
-            else:
-                transition_matrix = TransitionMatrices().generate_df(cohort)
-
-                # Cycle through the year interval for every age cohort
-                for _ in self.default_year_interval:
-                    # Multiply cohorts transition matrix by prevalence array for every year in year interval
-                    self.prevalence_array = self.prevalence_array.dot(transition_matrix)
-
-                    self.progression_df = self.progression_df.append(
-                        pd.Series(self.prevalence_array, index=self.progression_df.columns), ignore_index=True
-                    )
-
-        return self.progression_df
+        return self.final_calculations
 
 
-class BariatricDiseaseProgression(AlternativeDiseaseProgression):
-    def __init__(self, initial_cohort):
-        super().__init__(initial_cohort, BariatricTransitionMatrices)
+FinalCalculations().get_totals()
 
 
-class OCADiseaseProgression(AlternativeDiseaseProgression):
-    def __init__(self, initial_cohort):
-        super().__init__(initial_cohort, OCATransitionMatrices)
+def __init__(self):
+    self.bariatric_totals = MarkovModel(type='bariatric').aggregate_cohort_totals()
+    self.control_totals = MarkovModel().aggregate_cohort_totals()
 
 
-class OutputToCsv:
-    def __init__(self):
-        self.cohorts = ModelInputs.cohorts
-        self.output_file = None
+def calculate_ICER(self):
+    total_cost_diff = self.bariatric_totals['Total Cost'] - self.control_totals['Total Cost']
+    total_qaly_diff = self.bariatric_totals['Total QALY'] - self.control_totals['Total QALY']
 
-    def output_disease_progression(self, progression_type):
-        for age_cohort in self.cohorts:
-            df = progression_type(age_cohort).calculate_disease_progression()
+    icer = total_cost_diff / total_qaly_diff
+    return icer
 
-            pd.DataFrame({'Cohort': age_cohort}, index=['Cohort']).to_csv(self.output_file, mode='a')
-            df.to_csv(self.output_file, mode='a')
 
-    def output_regular_disease_progression(self):
-        self.output_file = 'regular_disease_progression.csv'
-        self.output_disease_progression(DiseaseProgression)
+def write_totals_to_csv(self):
+    icer = self.calculate_ICER()
+    self.bariatric_totals = self.bariatric_totals.rename(columns={"Total Cost": "Bariatric Total Cost",
+                                                                  "Total QALY": "Bariatric Total QALY",
+                                                                  "Total Cost PPPY": "Bariatric Total Cost PPPY",
+                                                                  "Total Life Years": "Bariatric Total Life Years"})
 
-    def output_bariatric_disease_progression(self):
-        self.output_file = 'bariatric_disease_progression.csv'
-        self.output_disease_progression(BariatricDiseaseProgression)
+    concatenated_totals = pd.concat([self.bariatric_totals,
+                                     self.control_totals,
+                                     icer.to_frame(name='ICER')], axis=1)
 
-    def output_oca_disease_progression(self):
-        self.output_file = 'oca_disease_progression.csv'
-        self.output_disease_progression(OCADiseaseProgression)
+    MarkovModel().write_to_csv(concatenated_totals)
 
 
 if __name__ == '__main__':
-    OutputToCsv().output_regular_disease_progression()
-    OutputToCsv().output_bariatric_disease_progression()
-    OutputToCsv().output_oca_disease_progression()
+    print('test')
