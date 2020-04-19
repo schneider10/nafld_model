@@ -9,9 +9,8 @@ class Totals:
         Split big matrix into chunks based on interval. Sum all values in chunk to get life years at interval.
     """
 
-    def __init__(self, disease_progression_matrix):
-        super().__init__()
-        self.disease_progression_matrix = disease_progression_matrix
+    def __init__(self, progression, cohort):
+        self.disease_progression_matrix = progression(cohort).calculate_progression()
 
     def get_total_life_years(self):
         """ Calculate total life years by summing all of the progression values
