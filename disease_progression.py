@@ -97,6 +97,7 @@ class OutputToCsv:
         for age_cohort in self.cohorts:
             df = disease_progression(age_cohort).calculate_progression()
 
+            # Output cohort name.
             pd.DataFrame({'Cohort': age_cohort}, index=['Cohort']).to_csv(self.output_file, mode='a')
             df.to_csv(self.output_file, mode='a')
 
