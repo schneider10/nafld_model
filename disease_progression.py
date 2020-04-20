@@ -1,6 +1,6 @@
 import pandas as pd
 
-from inputs import ModelInputs
+from inputs import inputs
 from transition_matrices import TransitionMatrices, BariatricTransitionMatrices, OCATransitionMatrices
 from prevalence import StatePrevalence
 
@@ -15,20 +15,16 @@ class DiseaseProgression:
         super().__init__()
 
         # Get age cohorts specific to the initial cohort selected.
-        self.age_cohorts = ModelInputs.cohorts[ModelInputs.cohorts.index(initial_cohort):]
+        self.relevant_age_cohorts = inputs.cohorts[inputs.cohorts.index(initial_cohort):]
 
         # Get initial prevalence array for initial cohort.
         self.progression_df = self.disease_prevalence.loc[[initial_cohort]].reset_index(drop=True)
 
         self.prevalence_array = self.progression_df.to_numpy()[0]
-        self.initial_cohort = initial_cohort
         self.default_year_interval = range(5)
 
-    def is_initial_cohort(self, cohort):
-        return cohort == self.initial_cohort
-
     def calculate_progression(self):
-        for cohort in self.age_cohorts:
+        for cohort in self.relevant_age_cohorts:
 
             # Get transition matrix for current cohort if transition matrices are traditional.
             transition_matrix = TransitionMatrices().generate_df(cohort)
@@ -47,10 +43,14 @@ class DiseaseProgression:
 class AlternativeDiseaseProgression(DiseaseProgression):
     def __init__(self, initial_cohort, transition_matrices):
         super().__init__(initial_cohort)
+        self.initial_cohort = initial_cohort
         self.alternative_transition_matrices = transition_matrices
 
+    def is_initial_cohort(self, cohort):
+        return cohort == self.initial_cohort
+
     def calculate_progression(self):
-        for cohort in self.age_cohorts:
+        for cohort in self.relevant_age_cohorts:
             if self.is_initial_cohort(cohort):
 
                 # Cycle through the year interval for every age cohort. Range is 5 for 5 new bariatric tx matrices.
@@ -79,36 +79,14 @@ class AlternativeDiseaseProgression(DiseaseProgression):
 
 
 class BariatricDiseaseProgression(AlternativeDiseaseProgression):
+    substitutions = inputs.bariatric_substitutions
+
     def __init__(self, initial_cohort):
         super().__init__(initial_cohort, BariatricTransitionMatrices)
 
 
 class OCADiseaseProgression(AlternativeDiseaseProgression):
+    substitutions = inputs.oca_substitutions
+
     def __init__(self, initial_cohort):
         super().__init__(initial_cohort, OCATransitionMatrices)
-
-
-class OutputToCsv:
-    def __init__(self):
-        self.cohorts = ModelInputs.cohorts
-        self.output_file = None
-
-    def output_disease_progression(self, disease_progression):
-        for age_cohort in self.cohorts:
-            df = disease_progression(age_cohort).calculate_progression()
-
-            # Output cohort name.
-            pd.DataFrame({'Cohort': age_cohort}, index=['Cohort']).to_csv(self.output_file, mode='a')
-            df.to_csv(self.output_file, mode='a')
-
-    def output_regular_disease_progression(self):
-        self.output_file = 'regular_disease_progression.csv'
-        self.output_disease_progression(DiseaseProgression)
-
-    def output_bariatric_disease_progression(self):
-        self.output_file = 'bariatric_disease_progression.csv'
-        self.output_disease_progression(BariatricDiseaseProgression)
-
-    def output_oca_disease_progression(self):
-        self.output_file = 'oca_disease_progression.csv'
-        self.output_disease_progression(OCADiseaseProgression)

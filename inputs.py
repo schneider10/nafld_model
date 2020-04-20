@@ -1,33 +1,35 @@
 import pandas as pd
 
 
-class LoadIn:
-    inputs = pd.read_excel('model_inputs.xlsx', sheet_name=None)
-
-
 class ModelInputs:
-    NAFLD_inputs = LoadIn.inputs['Cohort and NAFLD Prevalence'].set_index('Cohorts')
+    def __init__(self, input_file='model_inputs.xlsx'):
+        self.raw_input = pd.read_excel(input_file, sheet_name=None)
 
-    other_disease_inputs = LoadIn.inputs['Other Disease State Prevalences'].set_index('Disease States')
+        self.NAFLD_inputs = self.raw_input['Cohort and NAFLD Prevalence'].set_index('Cohorts')
 
-    background_mortality = LoadIn.inputs['Age-specific Probabilities'].set_index('Age Cohorts')[
-        'Background mortality annual probability']
+        self.other_disease_inputs = self.raw_input['Other Disease State Prevalences'].set_index('Disease States')
 
-    NAFLD_annual_probabilities = LoadIn.inputs['Age-specific Probabilities'].set_index('Age Cohorts')[
-        'NAFLD annual probability']
+        self.background_mortality = self.raw_input['Age-specific Probabilities'].set_index('Age Cohorts')[
+            'Background mortality annual probability']
 
-    age_specific_rr = LoadIn.inputs['Age-specific Relative Risks'].set_index('Age Cohorts')
+        self.NAFLD_annual_probabilities = self.raw_input['Age-specific Probabilities'].set_index('Age Cohorts')[
+            'NAFLD annual probability']
 
-    transition_probabilities = LoadIn.inputs['Transition Probabilities'].set_index('Base Transition Matrix')
+        self.age_specific_rr = self.raw_input['Age-specific Relative Risks'].set_index('Age Cohorts')
 
-    mortality_risk = LoadIn.inputs['Disease-specific Mortality Risk'].set_index('Disease States')
+        self.transition_probabilities = self.raw_input['Transition Probabilities'].set_index('Base Transition Matrix')
 
-    scoring_and_costing = LoadIn.inputs['Health Scoring and Costing'].set_index('Disease States').fillna(0)
+        self.mortality_risk = self.raw_input['Disease-specific Mortality Risk'].set_index('Disease States')
 
-    bariatric_substitutions = LoadIn.inputs['Treatment Effects'].set_index('Treatment Year')
+        self.scoring_and_costing = self.raw_input['Health Scoring and Costing'].set_index('Disease States').fillna(0)
 
-    oca_substitutions = LoadIn.inputs['OCA Effects'].set_index('Treatment Year')
+        self.bariatric_substitutions = self.raw_input['Treatment Effects'].set_index('Treatment Year')
 
-    cohorts = NAFLD_inputs.index.tolist()
+        self.oca_substitutions = self.raw_input['OCA Effects'].set_index('Treatment Year')
 
-    disease_states = transition_probabilities.index
+        self.cohorts = self.NAFLD_inputs.index.tolist()
+
+        self.disease_states = self.transition_probabilities.index
+
+
+inputs = ModelInputs()

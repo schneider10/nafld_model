@@ -1,6 +1,6 @@
 import pandas as pd
 
-from inputs import ModelInputs
+from inputs import inputs
 from disease_progression import DiseaseProgression, BariatricDiseaseProgression, OCADiseaseProgression
 
 
@@ -21,16 +21,16 @@ class Totals:
         """ Calculate total QALY by summing each column of progression values,
             weighing these values and summing them. """
         return self.disease_progression_matrix.sum(axis=0).multiply(
-            ModelInputs.scoring_and_costing['Quality Weight']).sum()
+            inputs.scoring_and_costing['Quality Weight']).sum()
 
     def get_total_cost(self):
         """ Calculate total cost by summing each column of progression values, weighing these values with a cost,
         summing them and then adding the total difference of death progression (delta death). """
 
-        first_year_costs = ModelInputs.scoring_and_costing.loc['death']['First year costs']
+        first_year_costs = inputs.scoring_and_costing.loc['death']['First year costs']
 
         total_cost = self.disease_progression_matrix.sum(axis=0).multiply(
-            ModelInputs.scoring_and_costing['Per patient per year cost']).sum()
+            inputs.scoring_and_costing['Per patient per year cost']).sum()
 
         delta_death = (self.disease_progression_matrix.iloc[-1]['death'] -
                        self.disease_progression_matrix.iloc[0]['death']) * first_year_costs
@@ -61,7 +61,7 @@ class OutputTotals:
                                                            'Total Cost PPPY']}).set_index('Totals')
 
     def output_totals_df(self, disease_progression, output_file=None):
-        for cohort in ModelInputs.cohorts:
+        for cohort in inputs.cohorts:
             disease_progression_matrix = disease_progression(cohort).calculate_progression()
 
             # populate final calculations dataframe

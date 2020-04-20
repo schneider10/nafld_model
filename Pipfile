@@ -9,6 +9,7 @@ verify_ssl = true
 pandas = "*"
 numpy = "*"
 xlrd = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.8"
