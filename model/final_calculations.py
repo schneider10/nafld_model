@@ -1,5 +1,5 @@
-from totals import Totals
-from disease_progression import DiseaseProgression
+from model.totals import Totals
+from model.disease_progression import DiseaseProgression
 
 
 class FinalCalculations(Totals):

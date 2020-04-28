@@ -1,8 +1,8 @@
 import pandas as pd
 
-from inputs import inputs
-from transition_matrices import TransitionMatrices, BariatricTransitionMatrices, OCATransitionMatrices
-from prevalence import StatePrevalence
+from model.inputs import inputs
+from model.transition_matrices import TransitionMatrices, BariatricTransitionMatrices, OCATransitionMatrices
+from model.state_prevalence import StatePrevalence
 
 
 class DiseaseProgression:

@@ -1,7 +1,7 @@
 import pandas as pd
 
-from inputs import inputs
-from disease_progression import DiseaseProgression, BariatricDiseaseProgression, OCADiseaseProgression
+from model.inputs import inputs
+from model.disease_progression import DiseaseProgression, BariatricDiseaseProgression, OCADiseaseProgression
 
 
 class Totals:

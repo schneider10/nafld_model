@@ -1,5 +1,7 @@
-from disease_progression import DiseaseProgression, BariatricDiseaseProgression, OCADiseaseProgression
-from inputs import inputs
+import pandas as pd
+
+from model.disease_progression import DiseaseProgression, BariatricDiseaseProgression, OCADiseaseProgression
+from model.inputs import inputs
 
 
 class OutputToCsv:

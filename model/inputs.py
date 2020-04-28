@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 
 
 class ModelInputs:
@@ -32,4 +33,8 @@ class ModelInputs:
         self.disease_states = self.transition_probabilities.index
 
 
-inputs = ModelInputs()
+# Load inputs to be accessed globally.
+if os.environ['TESTING']:
+    inputs = ModelInputs(input_file='test_model_inputs.xlsx')
+else:
+    inputs = ModelInputs()

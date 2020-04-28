@@ -1,6 +1,6 @@
-from disease_progression import BariatricDiseaseProgression, OCADiseaseProgression
-from final_calculations import FinalCalculations
-from inputs import inputs
+from model.disease_progression import BariatricDiseaseProgression, OCADiseaseProgression
+from model.final_calculations import FinalCalculations
+from model.inputs import inputs
 
 if __name__ == '__main__':
     treatments = [BariatricDiseaseProgression, OCADiseaseProgression]

@@ -1,7 +1,7 @@
 import itertools
 import numpy as np
-from mortality import Mortality
-from inputs import inputs
+from model.mortality import Mortality
+from model.inputs import inputs
 
 
 class Regression:
@@ -26,8 +26,9 @@ class HccToLt:
 
 
 class TransitionMatrices(Mortality):
-    def __init__(self):
+    def __init__(self, year=None):
         super().__init__()
+        self.year = year
         self.df = inputs.transition_probabilities  # matrix with all the string substitutions
         self.disease_states = inputs.disease_states
 
@@ -79,7 +80,7 @@ class TransitionMatrices(Mortality):
         transition_matrices = {}
 
         for cohort in inputs.cohorts:
-            transition_matrices.update({cohort: TransitionMatrices().generate_transition_matrix(cohort)})
+            transition_matrices.update({cohort: TransitionMatrices().generate_df(cohort)})
         """
 
         # Loop through every possible transition and calculate progression probability if necessary
@@ -107,8 +108,7 @@ class BariatricTransitionMatrices(TransitionMatrices):
         Bariatric Transition Matrices are the same as the normal transition matrices with the exception that they
         also contain extra matrices for Years 1-5 for every cohort (5 x cohort amount extra matrices).
         """
-        super().__init__()
-        self.year = year
+        super().__init__(year)
 
         # transition prob located in 'progression calc'
         self.f2_to_f1 = inputs.bariatric_substitutions['F2, F1 transition probability']
@@ -140,8 +140,7 @@ class OCATransitionMatrices(TransitionMatrices):
         OCA Transition Matrices are the same as the normal transition matrices with the exception that they
         also contain extra matrices for Years 1-5 for every cohort (5 x cohort amount extra matrices).
         """
-        super().__init__()
-        self.year = year
+        super().__init__(year)
 
         # transition prob located in 'progression calc'
         self.f2_to_f1 = inputs.oca_substitutions['F2, F1 transition probability']

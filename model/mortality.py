@@ -1,11 +1,10 @@
 import pandas as pd
-from inputs import inputs
+from model.inputs import inputs
 
 
 class Mortality:
 
     def __init__(self):
-        super().__init__()
         self.mortality_prob = self.create_mortality_probability_dataframe()
 
     def get_disease_state_mortality_RR(self, disease_state):
@@ -21,9 +20,8 @@ class Mortality:
 
         # Calculate mortality probabilities for NAFLD, F1, F2, F3, and F4
         for disease_state in ['NAFLD', 'F1', 'F2', 'F3', 'F4']:
-            self.mortality_prob[f'{disease_state} mortality probability'] = \
-                inputs.background_mortality * \
-                inputs.age_specific_rr['NAFLD mortality RR'] * \
-                self.get_disease_state_mortality_RR(disease_state)
+            self.mortality_prob[f'{disease_state} mortality probability'] = inputs.background_mortality \
+                * inputs.age_specific_rr['NAFLD mortality RR'] \
+                * self.get_disease_state_mortality_RR(disease_state)
 
         return self.mortality_prob

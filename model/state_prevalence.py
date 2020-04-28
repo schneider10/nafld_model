@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from inputs import inputs
+from model.inputs import inputs
 
 
 # Prevalence Calculations
@@ -13,7 +13,7 @@ class StatePrevalence:
     def calculate_disease_prevalence_per_age_cohort(self):
         """ """
         zeros_column = np.zeros(len(inputs.NAFLD_inputs.index))
-        fibrosis_states_per_age_cohort = {fibrosis_state: self.calculate_fibrosis_per_age_cohort(fibrosis_state) \
+        fibrosis_states_per_age_cohort = {fibrosis_state: self.calculate_fibrosis_per_age_cohort(fibrosis_state)
                                           for fibrosis_state in ['F1', 'F2', 'F3', 'F4']}
 
         # Assign calculation results to columns
@@ -43,25 +43,25 @@ class StatePrevalence:
     def calculate_fibrosis_per_age_cohort(self, disease_state):
         # Multipy Disease Prevalence Adjustment by F1, F2, F3, F4 non-age specific prevalence by NAFLD prevalence
         return inputs.NAFLD_inputs['Disease Prevalence Adjustment'] \
-            * inputs.other_disease_inputs.loc[disease_state]['Non-age specific prevalence'] \
-            * self.calculate_NAFLD_per_age_cohort()
+               * inputs.other_disease_inputs.loc[disease_state]['Non-age specific prevalence'] \
+               * self.calculate_NAFLD_per_age_cohort()
 
     def calculate_total_cirrhosis_per_age_cohort(self):
         # Multiply Disease Prevalence Adjustment by cirrhohsis non-age specific prevalence by sample per cohort
         return inputs.NAFLD_inputs['Disease Prevalence Adjustment'] \
-            * inputs.other_disease_inputs.loc['DCC']['Non-age specific prevalence'] \
-            * inputs.NAFLD_inputs['Sample per cohort']
+               * inputs.other_disease_inputs.loc['DCC']['Non-age specific prevalence'] \
+               * inputs.NAFLD_inputs['Sample per cohort']
 
     def calculate_NASH_HCC_per_age_cohort(self, fibrosis_states_per_age_cohort):
         """ Multiple Disease Prevalence Adjustment by NASH HCC non-age specific prevalence
         by the total NASH patients in each age cohort """
         return inputs.NAFLD_inputs['Disease Prevalence Adjustment'] \
-            * inputs.other_disease_inputs.loc['HCC']['Non-age specific prevalence'] \
-            * sum(fibrosis_states_per_age_cohort.values())
+               * inputs.other_disease_inputs.loc['HCC']['Non-age specific prevalence'] \
+               * sum(fibrosis_states_per_age_cohort.values())
 
     def calculate_cirrhosis_LT_per_age_cohort(self):
         """ Multiply Disease Prevalence Adjustment by LT non-age specific prevalence
         by the total cirrhosis patients in each age cohort """
         return inputs.NAFLD_inputs['Disease Prevalence Adjustment'] \
-            * self.calculate_total_cirrhosis_per_age_cohort() \
-            * inputs.other_disease_inputs.loc['LT']['Non-age specific prevalence']
+               * self.calculate_total_cirrhosis_per_age_cohort() \
+               * inputs.other_disease_inputs.loc['LT']['Non-age specific prevalence']
