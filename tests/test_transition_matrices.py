@@ -9,11 +9,21 @@ def generate_alternative_transition_matrices(year_index, transition_matrix=Trans
     for yr in year_index:
         for cohort in inputs.cohorts:
             matrix = transition_matrix(year=yr).generate_df(cohort)
-            output_file = f'outputs/{yr}-{matrix_name}_t_matrices.csv'
+            output_file = f'outputs/matrices/{matrix_name}-{yr}_t_matrices.csv'
             pd.DataFrame({'Cohort': cohort}, index=['Cohort']).to_csv(output_file, mode='a')
             matrix.to_csv(output_file, mode='a')
 
             yield {f'{yr}:{cohort}': matrix}
+
+
+def generate_control_transition_matrices():
+    for cohort in inputs.cohorts:
+        matrix = TransitionMatrices().generate_df(cohort)
+        output_file = f'outputs/matrices/control_t_matrices.csv'
+        pd.DataFrame({'Cohort': cohort}, index=['Cohort']).to_csv(output_file, mode='a')
+        matrix.to_csv(output_file, mode='a')
+
+        yield {f'{cohort}': matrix}
 
 
 def generate_bariatric_transition_matrices():
@@ -29,23 +39,25 @@ def generate_oca_transition_matrices():
 def test_bariatric_transition_matrix_generation(test_inputs):
     matrices = generate_bariatric_transition_matrices()
     for m in matrices:
-        test_case = {'matrix': 'Tx Year 1:45-49', 'sum': 12.31293563228806}
+        test_case = {'cohort': 'Tx Year 1:45-49', 'sum': 12.31293563228806}
 
-        if test_case['matrix'] in m:
-            assert m[test_case['matrix']].to_numpy().sum() == test_case['sum']
-            break
+        if test_case['cohort'] in m:
+            assert m[test_case['cohort']].to_numpy().sum() == test_case['sum']
 
 
 def test_oca_transition_matrix_generation(test_inputs):
     matrices = generate_oca_transition_matrices()
     for m in matrices:
-        test_case = {'matrix': 'Tx Year 1:45-49', 'sum': 12.174775270831246}
+        test_case = {'cohort': 'Tx Year 1:45-49', 'sum': 12.140628306032074}
 
-        if test_case['matrix'] in m:
-            assert m[test_case['matrix']].to_numpy().sum() == test_case['sum']
-            break
+        if 'Tx Year 1:45-49' in m:
+            assert m['Tx Year 1:45-49'].to_numpy().sum() == test_case['sum']
 
 
 def test_control_transition_matrix_generation(test_inputs):
-    for cohort in inputs.cohorts:
-        matrix = TransitionMatrices().generate_df(cohort)
+    matrices = generate_control_transition_matrices()
+    for m in matrices:
+        test_case = {'cohort': '45-49', 'sum': 12.140002282748007}
+
+        if test_case['cohort'] in m:
+            assert m[test_case['cohort']].to_numpy().sum() == test_case['sum']
