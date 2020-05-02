@@ -1,7 +1,4 @@
-import pandas as pd
-
 from model.inputs import inputs
-from model.disease_progression import DiseaseProgression, BariatricDiseaseProgression, OCADiseaseProgression
 
 
 class Totals:
@@ -11,9 +8,13 @@ class Totals:
 
     def __init__(self, progression, cohort):
         self.disease_progression_matrix = progression(cohort).calculate_progression()
+        self.total_cost = self.get_total_cost()
+        self.total_QALY = self.get_total_QALY()
+        self.total_life_years = self.get_total_life_years()
 
     def get_total_life_years(self):
         """ Calculate total life years by summing all of the progression values
+        This is not necessary to calculate an icer.
         """
         return self.disease_progression_matrix.to_numpy().sum()
 
@@ -37,48 +38,6 @@ class Totals:
 
         return total_cost + delta_death
 
-    @staticmethod
-    def get_total_cost_pppy(total_cost, total_life_years):
-        return total_cost / total_life_years
-
-    def get_totals(self):
-        """ For every initial age cohort, calculate all aggregate values.
-        """
-
-        total_life_years = self.get_total_life_years()
-        total_QALY = self.get_total_QALY()
-        total_cost = self.get_total_cost()
-        total_cost_pppy = self.get_total_cost_pppy(total_cost, total_life_years)
-
-        return [total_life_years, total_QALY, total_cost, total_cost_pppy]
-
-
-class OutputTotals:
-    def __init__(self):
-        self.final_calculations = pd.DataFrame({'Totals': ['Total Life Years',
-                                                           'Total QALY',
-                                                           'Total Cost',
-                                                           'Total Cost PPPY']}).set_index('Totals')
-
-    def output_totals_df(self, disease_progression, output_file=None):
-        for cohort in inputs.cohorts:
-            disease_progression_matrix = disease_progression(cohort).calculate_progression()
-
-            # populate final calculations dataframe
-            self.final_calculations[cohort] = Totals(disease_progression_matrix).get_totals()
-
-            # Calculate the sum of these totals for all cohorts
-        self.final_calculations['All Cohorts'] = self.final_calculations.sum(axis=1)
-        if output_file:
-            self.final_calculations.to_csv(output_file)
-
-        return self.final_calculations
-
-    def get_control_totals_df(self, output_file=None):
-        return self.output_totals_df(DiseaseProgression, output_file)
-
-    def get_bariatric_totals_df(self, output_file=None):
-        return self.output_totals_df(BariatricDiseaseProgression, output_file)
-
-    def get_oca_totals_df(self, output_file=None):
-        return self.output_totals_df(OCADiseaseProgression, output_file)
+    def get_total_cost_pppy(self):
+        # This is not necessary to calculate an icer.
+        return self.total_cost / self.total_life_years
