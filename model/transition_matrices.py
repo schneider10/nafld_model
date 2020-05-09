@@ -26,6 +26,9 @@ class HccToLt:
 
 
 class TransitionMatrices(Mortality):
+    year_index = None
+    name = 'control'
+
     def __init__(self, year=None):
         super().__init__()
         self.year = year
@@ -103,6 +106,9 @@ class TransitionMatrices(Mortality):
 
 
 class BariatricTransitionMatrices(TransitionMatrices):
+    year_index = inputs.bariatric_substitutions.index
+    name = 'bariatric'
+
     def __init__(self, year):
         """
         Bariatric Transition Matrices are the same as the normal transition matrices with the exception that they
@@ -135,6 +141,9 @@ class BariatricTransitionMatrices(TransitionMatrices):
 
 
 class OCATransitionMatrices(TransitionMatrices):
+    year_index = inputs.oca_substitutions.index
+    name = 'oca'
+
     def __init__(self, year):
         """
         OCA Transition Matrices are the same as the normal transition matrices with the exception that they
