@@ -41,15 +41,16 @@ class FinalCalculations(Totals):
         return - self.get_net_savings() / self.get_qaly_gained()
 
     def get_all_final_calculations(self):
-        return pd.DataFrame(data={'Total Life Years': [self.get_total_life_years()],
-                                  'Total QALY': [self.get_total_QALY()],
-                                  'Total Cost': [self.get_total_cost()],
-                                  'Total Cost PPPY': [self.get_total_cost_pppy()],
-                                  'Patients Treated': [self.patients_treated],
-                                  'Treatment Costs': [self.get_treatment_costs()],
-                                  'QALY Gained': [self.get_qaly_gained()],
-                                  'QALY Gained per pt': [self.get_qaly_gained_per_patient_treated()],
-                                  'Treatment Costs per pt': [self.get_treatment_costs_per_patient_treated()],
-                                  'Net Savings': [self.get_net_savings()],
-                                  'Net Savings per pt': [self.get_net_savings_per_patient_treated()],
-                                  'ICER': [self.get_icer()]})
+        return {'Cohort': self.cohort,
+                'Total Life Years': self.get_total_life_years(),
+                'Total QALY': self.get_total_QALY(),
+                'Total Cost': self.get_total_cost(),
+                'Total Cost PPPY': self.get_total_cost_pppy(),
+                'Patients Treated': self.patients_treated,
+                'Treatment Costs': self.get_treatment_costs(),
+                'QALY Gained': self.get_qaly_gained(),
+                'QALY Gained per pt': self.get_qaly_gained_per_patient_treated(),
+                'Treatment Costs per pt': self.get_treatment_costs_per_patient_treated(),
+                'Net Savings': self.get_net_savings(),
+                'Net Savings per pt': self.get_net_savings_per_patient_treated(),
+                'ICER': self.get_icer()}
