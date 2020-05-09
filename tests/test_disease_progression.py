@@ -9,15 +9,13 @@ class OutputProgression:
         self.output_file = None
 
     def output_disease_progression(self, disease_progression):
+        pd.DataFrame().to_csv(self.output_file)
+
         for ind, cohort in enumerate(inputs.cohorts):
             df = disease_progression(cohort).calculate_progression()
 
             # Output cohort name.
-            if ind == 0:
-                pd.DataFrame({'Cohort': [cohort]}).to_csv(self.output_file)
-            else:
-                pd.DataFrame({'Cohort': [cohort]}).to_csv(self.output_file, mode='a')
-
+            pd.DataFrame({'Cohort': [cohort]}).to_csv(self.output_file, mode='a')
             df.to_csv(self.output_file, mode='a')
 
             yield {f'{cohort}': df}
