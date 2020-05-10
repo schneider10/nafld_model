@@ -10,6 +10,7 @@ pandas = "*"
 numpy = "*"
 xlrd = "*"
 pytest = "*"
+pytest-xdist = "*"
 
 [requires]
 python_version = "3.8"

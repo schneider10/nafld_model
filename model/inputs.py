@@ -38,3 +38,7 @@ if os.environ['TESTING']:
     inputs = ModelInputs(input_file='test_model_inputs.xlsx')
 else:
     inputs = ModelInputs()
+
+
+def round_4(num):
+    return round(num, 4)

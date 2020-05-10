@@ -1,5 +1,5 @@
 import pandas as pd
-from model.inputs import inputs
+from model.inputs import inputs, round_4
 
 # before writing tests, lets get each testable step to output results nicely here.
 from model.transition_matrices import BariatricTransitionMatrices, OCATransitionMatrices, TransitionMatrices
@@ -36,25 +36,28 @@ class OutputTransitionMatrices:
 def test_bariatric_transition_matrix_generation(test_inputs):
     matrices = OutputTransitionMatrices(BariatricTransitionMatrices).output_alt_transition_matrices()
     for m in matrices:
-        test_case = {'cohort': 'Tx Year 5:75-79', 'sum': 12.143124533564507}
+        test_case = {'cohort': 'Tx Year 5:75-79', 'sum': 13.1806}
 
         if test_case['cohort'] in m:
-            assert m[test_case['cohort']].to_numpy().sum() == test_case['sum']
+            matrix_sum = m[test_case['cohort']].to_numpy().sum()
+            assert round_4(matrix_sum) == test_case['sum']
 
     
 def test_oca_transition_matrix_generation(test_inputs):
     matrices = OutputTransitionMatrices(OCATransitionMatrices).output_alt_transition_matrices()
     for m in matrices:
-        test_case = {'cohort': 'Tx Year 5:75-79', 'sum': 12.143124533564507}
+        test_case = {'cohort': 'Tx Year 5:75-79', 'sum': 13.1806}
 
         if test_case['cohort'] in m:
-            assert m[test_case['cohort']].to_numpy().sum() == test_case['sum']
+            matrix_sum = m[test_case['cohort']].to_numpy().sum()
+            assert round_4(matrix_sum) == test_case['sum']
 
 
 def test_control_transition_matrix_generation(test_inputs):
     matrices = OutputTransitionMatrices().output_control_transition_matrices()
     for m in matrices:
-        test_case = {'cohort': '75-79', 'sum': 12.419611996097329}
+        test_case = {'cohort': '75-79', 'sum': 13.1806}
 
         if test_case['cohort'] in m:
-            assert m[test_case['cohort']].to_numpy().sum() == test_case['sum']
+            matrix_sum = m[test_case['cohort']].to_numpy().sum()
+            assert round_4(matrix_sum) == test_case['sum']

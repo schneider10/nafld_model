@@ -1,5 +1,5 @@
 import pandas as pd
-from model.inputs import inputs
+from model.inputs import inputs, round_4
 
 
 class Mortality:
@@ -20,8 +20,9 @@ class Mortality:
 
         # Calculate mortality probabilities for NAFLD, F1, F2, F3, and F4
         for disease_state in ['NAFLD', 'F1', 'F2', 'F3', 'F4']:
-            self.mortality_prob[f'{disease_state} mortality probability'] = inputs.background_mortality \
-                * inputs.age_specific_rr['NAFLD mortality RR'] \
-                * self.get_disease_state_mortality_RR(disease_state)
+            self.mortality_prob[f'{disease_state} mortality probability'] = \
+                round_4(inputs.background_mortality
+                        * inputs.age_specific_rr['NAFLD mortality RR']
+                        * self.get_disease_state_mortality_RR(disease_state))
 
         return self.mortality_prob

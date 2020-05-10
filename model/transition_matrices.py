@@ -1,8 +1,8 @@
 import itertools
 import numpy as np
 from model.mortality import Mortality
-from model.inputs import inputs
-
+from model.inputs import inputs, round_4
+import copy
 
 class Regression:
 
@@ -32,7 +32,7 @@ class TransitionMatrices(Mortality):
     def __init__(self, year=None):
         super().__init__()
         self.year = year
-        self.df = inputs.transition_probabilities  # matrix with all the string substitutions
+        self.df = copy.copy(inputs.transition_probabilities)  # matrix with all the string substitutions
         self.disease_states = inputs.disease_states
 
     def set_probability(self, initial_state, final_state, probability):
@@ -72,7 +72,7 @@ class TransitionMatrices(Mortality):
         Residual Probability is set to None in 'insert_probabilities' to allow 'fillna' to insert these probabilities.
         """
 
-        residual_probabilities = self.df.apply(lambda x: 1 - np.sum(x), axis=1)
+        residual_probabilities = self.df.apply(lambda x: round_4(1 - np.sum(x)), axis=1)
 
         for state in residual_probabilities.index:
             self.df.loc[state].fillna(residual_probabilities[state], inplace=True)
@@ -97,7 +97,7 @@ class TransitionMatrices(Mortality):
                 # Get the transition type based on initial and final state
                 transition_type = self.get_transition_type(initial_state, final_state)
                 if transition_type:
-                    probability = transition_type.calculate(value)[age_cohort]
+                    probability = round_4(transition_type.calculate(value)[age_cohort])
                     self.set_probability(initial_state, final_state, probability)
 
         self.replace_strings_with_inputs(age_cohort)
