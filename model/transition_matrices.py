@@ -2,7 +2,7 @@ import itertools
 import numpy as np
 from model.mortality import Mortality
 from model.inputs import inputs, round_4
-import copy
+
 
 class Regression:
 
@@ -32,7 +32,7 @@ class TransitionMatrices(Mortality):
     def __init__(self, year=None):
         super().__init__()
         self.year = year
-        self.df = copy.copy(inputs.transition_probabilities)  # matrix with all the string substitutions
+        self.df = inputs.transition_probabilities.copy()  # matrix with all the string substitutions
         self.disease_states = inputs.disease_states
 
     def set_probability(self, initial_state, final_state, probability):
