@@ -33,7 +33,7 @@ class OutputProgression:
         return self.output_disease_progression(OCADiseaseProgression)
 
 
-def test_control_disease_progression_generation(test_inputs):
+def test_control_disease_progression_generation():
     progression = OutputProgression().output_control_disease_progression()
     for p in progression:
         test_case = {'cohort': '45-49', 'sum': 373897}
@@ -42,7 +42,7 @@ def test_control_disease_progression_generation(test_inputs):
             assert int(p[test_case['cohort']].to_numpy().sum()) == test_case['sum']
 
 
-def test_bariatric_disease_progression_generation(test_inputs):
+def test_bariatric_disease_progression_generation():
     progression = OutputProgression().output_bariatric_disease_progression()
     for p in progression:
         test_case = {'cohort': '45-49', 'sum': 373897}
@@ -51,7 +51,7 @@ def test_bariatric_disease_progression_generation(test_inputs):
             assert int(p[test_case['cohort']].to_numpy().sum()) == test_case['sum']
 
 
-def test_oca_disease_progression_generation(test_inputs):
+def test_oca_disease_progression_generation():
     progression = OutputProgression().output_oca_disease_progression()
     for p in progression:
         test_case = {'cohort': '45-49', 'sum': 373896}

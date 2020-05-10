@@ -33,7 +33,7 @@ class OutputTransitionMatrices:
             yield {f'{cohort}': matrix}
 
 
-def test_bariatric_transition_matrix_generation(test_inputs):
+def test_bariatric_transition_matrix_generation():
     matrices = OutputTransitionMatrices(BariatricTransitionMatrices).output_alt_transition_matrices()
     for m in matrices:
         test_case = {'cohort': 'Tx Year 5:75-79', 'sum': 13.1806}
@@ -43,7 +43,7 @@ def test_bariatric_transition_matrix_generation(test_inputs):
             assert round_4(matrix_sum) == test_case['sum']
 
     
-def test_oca_transition_matrix_generation(test_inputs):
+def test_oca_transition_matrix_generation():
     matrices = OutputTransitionMatrices(OCATransitionMatrices).output_alt_transition_matrices()
     for m in matrices:
         test_case = {'cohort': 'Tx Year 5:75-79', 'sum': 13.1806}
@@ -53,7 +53,7 @@ def test_oca_transition_matrix_generation(test_inputs):
             assert round_4(matrix_sum) == test_case['sum']
 
 
-def test_control_transition_matrix_generation(test_inputs):
+def test_control_transition_matrix_generation():
     matrices = OutputTransitionMatrices().output_control_transition_matrices()
     for m in matrices:
         test_case = {'cohort': '75-79', 'sum': 13.1806}

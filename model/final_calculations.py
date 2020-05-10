@@ -1,6 +1,5 @@
 from model.totals import Totals
 from model.disease_progression import DiseaseProgression
-import pandas as pd
 
 
 class FinalCalculations(Totals):
