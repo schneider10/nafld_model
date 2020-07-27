@@ -34,6 +34,7 @@ class OutputTransitionMatrices:
 
 
 def test_bariatric_transition_matrix_generation():
+    # TODO: add test to assert rows add up to one
     matrices = OutputTransitionMatrices(BariatricTransitionMatrices).output_alt_transition_matrices()
     for m in matrices:
         test_case = {'cohort': 'Tx Year 5:75-79', 'sum': 13.1806}

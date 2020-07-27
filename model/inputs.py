@@ -41,4 +41,5 @@ else:
 
 
 def round_4(num):
+    """ Rounds to four decimal points for test result precision. """
     return round(num, 4)

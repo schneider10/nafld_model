@@ -13,7 +13,6 @@ pytest-xdist = "*"
 pymc3 = "*"
 matplotlib = "*"
 seaborn = "*"
-jupyterlab = "*"
 
 [requires]
 python_version = "3.8"
